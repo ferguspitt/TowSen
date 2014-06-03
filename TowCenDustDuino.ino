@@ -1,5 +1,5 @@
 /*
-** TOW CENTER DUSTDUINO SKETCH V4.0 **
+** TOW CENTER DUSTDUINO SKETCH V4.1 **
 (C) 2014 by Matthew Schroyer
 mentalmunition.com
 
@@ -23,8 +23,9 @@ mentalmunition.com
 This sketch is for a DustDuino multi-sensor, which measures
 PM10 dust levels and noise. Noise is sampled at a rate of
 20 Hertz (50 milliseconds), while a dust reading is taken
-every 10 seconds. Peak and average readings are stored over
-a one-minute period on SD card.
+every 10 seconds. 
+FERGUS PITT: V4.1 has minor changes to change the temporal resolution: 
+Peak and average readings are stored at 10 sec intervals for sound and dust.
 
 ** CONNECTIONS **
 
@@ -113,7 +114,7 @@ void setup() {
   }
   Serial.println("card initialized.");
   
-  String startString = "Month,Day,Hour,Min,AvgDust,MaxDust,AvgSound,MaxSound";
+  String startString = "Month,Day,Hour,Min,Sec,AvgDust,MaxDust,AvgSound,MaxSound";
   File dataFile = SD.open("datalog.txt", FILE_WRITE);
     if (dataFile) {
     // Print first row with column headings in comma separated value format.  
@@ -133,20 +134,20 @@ void loop() {
     GetSound();
     //wdt_reset();
     
-    // every 10 seconds, sample dust and increase counter;
-    if ((millis() - starttime) > 10000) {
+    // every 1 second, sample dust and increase counter;
+    if ((millis() - starttime) > 1000) {
       GetDust();
       digitalWrite(2, HIGH);
       delay(100);
       digitalWrite(2, LOW);      
-      minutes++;
+      seconds++;
       starttime = millis();
     }
     
-    // when counter hits one minute, find time and log data
-    if (minutes > 6) {
+    // when counter hits ten seconds, find time and log data
+    if (seconds > 10) {
       LogData();
-      minutes = 0;
+      seconds = 0;
       starttime = millis();
     }
     
@@ -233,6 +234,8 @@ void LogData()
       dataFile.print(",");
       dataFile.print(now.minute(), DEC);
       dataFile.print(",");
+      dataFile.print(now.second(), DEC);
+      dataFile.print(",");
       dataFile.print(AvgDust);
       dataFile.print(",");
       dataFile.print(MaxDust);
@@ -251,6 +254,8 @@ void LogData()
       Serial.print(",");
       Serial.print(now.minute(), DEC);
       Serial.print(",");
+      dataFile.print(now.second(), DEC);
+      dataFile.print(",");
       Serial.print(AvgDust);
       Serial.print(",");
       Serial.print(MaxDust);
